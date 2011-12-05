@@ -9,10 +9,12 @@ import qualified Data.ByteString.Lazy as L
 
 data ImageFormat = Gif | Jpeg | Png
 
-data Thumbnail = Thumbnail { fmt :: ImageFormat
-                           , img :: Image
-                           , sz  :: Size
-                           , lbs :: L.ByteString
+data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
+                           , img :: Image           -- ^ Thumbnail Image
+                           , sz  :: Size            -- ^ Thumbnail Size
+                           , lbs :: L.ByteString    -- ^ Thumbnail Data
+                           , orgImg :: Image        -- ^ Original Image
+                           , orgSZ :: Size          -- ^ Original Size
                            }
 
 mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
@@ -34,6 +36,8 @@ mkThumbnail = thumbnail . L.unpack
                                , img=thm
                                , sz=size'
                                , lbs=strictToLazy bs
+                               , orgImg=src
+                               , orgSZ=size
                                }
     
     thumbnailPng ws = do
@@ -47,6 +51,8 @@ mkThumbnail = thumbnail . L.unpack
                                , img=thm
                                , sz=size'
                                , lbs=strictToLazy bs
+                               , orgImg=src
+                               , orgSZ=size
                                }
       
     thumbnailGif ws = do
@@ -60,6 +66,8 @@ mkThumbnail = thumbnail . L.unpack
                                , img=thm
                                , sz=size'
                                , lbs=strictToLazy bs
+                               , orgImg=src
+                               , orgSZ=size
                                }
         
     strictToLazy = L.pack . BS.unpack
