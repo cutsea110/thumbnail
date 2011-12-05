@@ -20,10 +20,13 @@ data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
 mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
 mkThumbnail = thumbnail . L.unpack
   where
-    thumbnail ws@(0xff:0xd8:_) = thumbnailJpeg ws
-    thumbnail ws@(0x89:0x50:_) = thumbnailPng ws
-    thumbnail ws@(0x47:0x49:0x46:_) = thumbnailGif ws
-    thumbnail _ = return $ Left "unsupported image format"
+    thumbnail ws | length ws >= 3 = thumbnail' ws -- FIXME!
+                 | otherwise = return $ Left "unsupported image format"
+    
+    thumbnail' ws@(0xff:0xd8:_) = thumbnailJpeg ws
+    thumbnail' ws@(0x89:0x50:_) = thumbnailPng ws
+    thumbnail' ws@(0x47:0x49:0x46:_) = thumbnailGif ws
+    thumbnail' _ = return $ Left "unsupported image format"
     
     thumbnailJpeg ws = do
       src <- loadJpegByteString $ BS.pack ws
