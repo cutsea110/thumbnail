@@ -15,13 +15,13 @@ data Thumbnail = Thumbnail { fmt :: ImageFormat
                            , lbs :: L.ByteString
                            }
 
-mkThumbnail :: L.ByteString -> IO Thumbnail
+mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
 mkThumbnail = thumbnail . L.unpack
   where
     thumbnail ws@(0xff:0xd8:_) = thumbnailJpeg ws
     thumbnail ws@(0x89:0x50:_) = thumbnailPng ws
     thumbnail ws@(0x47:0x49:0x46:_) = thumbnailGif ws
-    thumbnail _ = error "unsupported image format"
+    thumbnail _ = return $ Left "unsupported image format"
     
     thumbnailJpeg ws = do
       src <- loadJpegByteString $ BS.pack ws
@@ -30,11 +30,11 @@ mkThumbnail = thumbnail . L.unpack
       let size' = newSize size
       thm <- uncurry resizeImage size' dest
       bs <- saveJpegByteString (-1) thm
-      return Thumbnail { fmt=Jpeg
-                       , img=thm
-                       , sz=size'
-                       , lbs=strictToLazy bs
-                       }
+      return $ Right Thumbnail { fmt=Jpeg
+                               , img=thm
+                               , sz=size'
+                               , lbs=strictToLazy bs
+                               }
     
     thumbnailPng ws = do
       src <- loadPngByteString $ BS.pack ws
@@ -43,11 +43,11 @@ mkThumbnail = thumbnail . L.unpack
       let size' = newSize size
       thm <- uncurry resizeImage size' dest
       bs <- savePngByteString thm
-      return Thumbnail { fmt=Png
-                       , img=thm
-                       , sz=size'
-                       , lbs=strictToLazy bs
-                       }
+      return $ Right Thumbnail { fmt=Png
+                               , img=thm
+                               , sz=size'
+                               , lbs=strictToLazy bs
+                               }
       
     thumbnailGif ws = do
       src <- loadGifByteString $ BS.pack ws
@@ -56,11 +56,11 @@ mkThumbnail = thumbnail . L.unpack
       let size' = newSize size
       thm <- uncurry resizeImage size' dest
       bs <- saveGifByteString thm
-      return Thumbnail { fmt=Gif
-                       , img=thm
-                       , sz=size'
-                       , lbs=strictToLazy bs
-                       }
+      return $ Right Thumbnail { fmt=Gif
+                               , img=thm
+                               , sz=size'
+                               , lbs=strictToLazy bs
+                               }
         
     strictToLazy = L.pack . BS.unpack
     
