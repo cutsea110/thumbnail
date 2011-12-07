@@ -15,6 +15,7 @@ data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
                            , lbs :: L.ByteString    -- ^ Thumbnail Data
                            , orgImg :: Image        -- ^ Original Image
                            , orgSZ :: Size          -- ^ Original Size
+                           , saveFile :: FilePath -> IO ()
                            }
 
 mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
@@ -35,12 +36,14 @@ mkThumbnail = thumbnail . L.unpack
       let size' = newSize size
       thm <- uncurry resizeImage size' dest
       bs <- saveJpegByteString (-1) thm
+      let save fp = saveJpegFile (-1) fp thm
       return $ Right Thumbnail { fmt=Jpeg
                                , img=thm
                                , sz=size'
                                , lbs=strictToLazy bs
                                , orgImg=src
                                , orgSZ=size
+                               , saveFile=save
                                }
     
     thumbnailPng ws = do
@@ -50,12 +53,14 @@ mkThumbnail = thumbnail . L.unpack
       let size' = newSize size
       thm <- uncurry resizeImage size' dest
       bs <- savePngByteString thm
+      let save fp = savePngFile fp thm
       return $ Right Thumbnail { fmt=Png
                                , img=thm
                                , sz=size'
                                , lbs=strictToLazy bs
                                , orgImg=src
                                , orgSZ=size
+                               , saveFile=save
                                }
       
     thumbnailGif ws = do
@@ -65,12 +70,14 @@ mkThumbnail = thumbnail . L.unpack
       let size' = newSize size
       thm <- uncurry resizeImage size' dest
       bs <- saveGifByteString thm
+      let save fp = saveGifFile fp thm
       return $ Right Thumbnail { fmt=Gif
                                , img=thm
                                , sz=size'
                                , lbs=strictToLazy bs
                                , orgImg=src
                                , orgSZ=size
+                               , saveFile=save
                                }
         
     strictToLazy = L.pack . BS.unpack
