@@ -1,8 +1,13 @@
+-- Based on http://hackage.haskell.org/package/thumbnail
+
 module Graphics.Thumbnail
        ( ImageFormat(..)
        , Thumbnail(..)
-       , mkThumbnail) where
+       , mkThumbnail
+       , mkThumbnail'
+       , defaultBounds) where
 
+import Prelude
 import Graphics.GD
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as L
@@ -19,7 +24,10 @@ data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
                            }
 
 mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
-mkThumbnail = thumbnail . L.unpack
+mkThumbnail = mkThumbnail' defaultBounds
+
+mkThumbnail' :: ((Int,Int),(Int,Int)) -> L.ByteString -> IO (Either String Thumbnail)
+mkThumbnail' sizeBounds = thumbnail . L.unpack
   where
     thumbnail ws | length ws >= 3 = thumbnail' ws -- FIXME!
                  | otherwise = return $ Left "unsupported image format"
@@ -33,7 +41,7 @@ mkThumbnail = thumbnail . L.unpack
       src <- loadJpegByteString $ BS.pack ws
       size <- imageSize src
       dest <- copyImage src
-      let size' = newSize size
+      let size' = newSize sizeBounds size
       thm <- uncurry resizeImage size' dest
       bs <- saveJpegByteString (-1) thm
       let save fp = saveJpegFile (-1) fp thm
@@ -50,7 +58,7 @@ mkThumbnail = thumbnail . L.unpack
       src <- loadPngByteString $ BS.pack ws
       size <- imageSize src
       dest <- copyImage src
-      let size' = newSize size
+      let size' = newSize sizeBounds size
       thm <- uncurry resizeImage size' dest
       bs <- savePngByteString thm
       let save fp = savePngFile fp thm
@@ -67,7 +75,7 @@ mkThumbnail = thumbnail . L.unpack
       src <- loadGifByteString $ BS.pack ws
       size <- imageSize src
       dest <- copyImage src
-      let size' = newSize size
+      let size' = newSize sizeBounds size
       thm <- uncurry resizeImage size' dest
       bs <- saveGifByteString thm
       let save fp = saveGifFile fp thm
@@ -82,13 +90,12 @@ mkThumbnail = thumbnail . L.unpack
         
     strictToLazy = L.pack . BS.unpack
     
-newSize :: Size -> Size
-newSize (w, h) | w >= h && wMax*h`div`w > wMin = (wMax, wMax*h`div`w)
+newSize :: ((Int,Int),(Int,Int)) -> Size -> Size
+newSize ((wMin,hMin),(wMax,hMax)) (w, h) | w >= h && wMax*h`div`w > wMin = (wMax, wMax*h`div`w)
                | w >= h && h >= hMin           = (hMin*w`div`h, hMin)
                | w <  h && hMax*w`div`h > hMin = (hMax*w`div`h, hMax)
                | w <  h && w >= wMin           = (wMin, wMin*h`div`w)
                | otherwise = (w, h)
 
-wMax, wMin, hMax, hMin :: Int
-(wMax, wMin) = (60, 20)
-(hMax, hMin) = (60, 20)
+defaultBounds :: ((Int,Int),(Int,Int))
+defaultBounds = ((20,20),(60,60))
