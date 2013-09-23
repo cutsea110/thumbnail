@@ -29,9 +29,11 @@ data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
                            , saveFile :: FilePath -> IO ()
                            }
 
+-- | Create a thumbnails with the default size
 mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
 mkThumbnail = mkThumbnail' defaultBounds
 
+-- | Create a thumbnail from a specific subregion of the image
 mkThumbnail' :: ((Int,Int),(Int,Int)) -> L.ByteString -> IO (Either String Thumbnail)
 mkThumbnail' sizeBounds = thumbnail . L.unpack
   where
