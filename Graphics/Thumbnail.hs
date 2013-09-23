@@ -14,6 +14,12 @@ import qualified Data.ByteString.Lazy as L
 
 data ImageFormat = Gif | Jpeg | Png
 
+-- | Convert `ImageFormat` to a mime type
+formatToType :: ImageFormat -> String
+formatToType Gif  = "image/gif"
+formatToType Jpeg = "image/jpeg"
+formatToType Png  = "image/png"
+
 data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
                            , img :: Image           -- ^ Thumbnail Image
                            , sz  :: Size            -- ^ Thumbnail Size
