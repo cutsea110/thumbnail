@@ -14,6 +14,12 @@ import qualified Data.ByteString.Lazy as L
 
 data ImageFormat = Gif | Jpeg | Png
 
+-- | Convert `ImageFormat` to a mime type
+formatToType :: ImageFormat -> String
+formatToType Gif  = "image/gif"
+formatToType Jpeg = "image/jpeg"
+formatToType Png  = "image/png"
+
 data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
                            , img :: Image           -- ^ Thumbnail Image
                            , sz  :: Size            -- ^ Thumbnail Size
@@ -23,9 +29,11 @@ data Thumbnail = Thumbnail { fmt :: ImageFormat     -- ^ Image Format Type
                            , saveFile :: FilePath -> IO ()
                            }
 
+-- | Create a thumbnails with the default size
 mkThumbnail :: L.ByteString -> IO (Either String Thumbnail)
 mkThumbnail = mkThumbnail' defaultBounds
 
+-- | Create a thumbnail from a specific subregion of the image
 mkThumbnail' :: ((Int,Int),(Int,Int)) -> L.ByteString -> IO (Either String Thumbnail)
 mkThumbnail' sizeBounds = thumbnail . L.unpack
   where
